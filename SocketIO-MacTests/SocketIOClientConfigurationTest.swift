@@ -15,16 +15,16 @@ class TestSocketIOClientConfiguration: XCTestCase {
     override func setUp() {
         super.setUp()
         
-        config = [.log(false), .forceNew(true)]
+        config = [.Log(false), .ForceNew(true)]
     }
 
     func testReplaceSameOption() {
-        config.insert(.log(true))
+        config.insert(.Log(true))
         
         XCTAssertEqual(config.count, 2)
         
         switch config[0] {
-        case let .log(log):
+        case let .Log(log):
             XCTAssertTrue(log)
         default:
             XCTFail()
@@ -32,12 +32,12 @@ class TestSocketIOClientConfiguration: XCTestCase {
     }
     
     func testIgnoreIfExisting() {
-        config.insert(.forceNew(false), replacing: false)
+        config.insert(.ForceNew(false), replacing: false)
         
         XCTAssertEqual(config.count, 2)
         
         switch config[1] {
-        case let .forceNew(new):
+        case let .ForceNew(new):
             XCTAssertTrue(new)
         default:
             XCTFail()

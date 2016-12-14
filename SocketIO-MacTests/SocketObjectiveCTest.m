@@ -21,7 +21,7 @@
 - (void)setUp {
     [super setUp];
     NSURL* url = [[NSURL alloc] initWithString:@"http://localhost"];
-    self.socket = [[SocketIOClient alloc] initWithSocketURL:url config:@{@"log": @YES, @"forcePolling": @YES}];
+    self.socket = [[SocketIOClient alloc] initWithSocketURL:url config:nil];
 }
 
 - (void)testOnSyntax {
@@ -31,13 +31,13 @@
 }
 
 - (void)testEmitSyntax {
-    [self.socket emit:@"testEmit" with:@[@YES]];
+    [self.socket emit:@"testEmit" withItems:@[@YES]];
 }
 
 - (void)testEmitWithAckSyntax {
-    [[self.socket emitWithAck:@"testAckEmit" with:@[@YES]] timingOutAfter:0 callback:^(NSArray* data) {
+    [self.socket emitWithAck:@"testAckEmit" withItems:@[@YES]](0, ^(NSArray* data) {
         
-    }];
+    });
 }
 
 - (void)testOffSyntax {
@@ -47,7 +47,7 @@
 - (void)testSocketManager {
     SocketClientManager* manager = [SocketClientManager sharedManager];
     [manager addSocket:self.socket labeledAs:@"test"];
-    [manager removeSocketWithLabel:@"test"];
+    [manager removeSocketWithLabel:@"test"];    
 }
 
 @end

@@ -15,24 +15,24 @@ class SocketEngineTest: XCTestCase {
 
     override func setUp() {
         super.setUp()
-        client = SocketIOClient(socketURL: URL(string: "http://localhost")!)
-        engine = SocketEngine(client: client, url: URL(string: "http://localhost")!, options: nil)
+        client = SocketIOClient(socketURL: NSURL(string: "http://localhost")!)
+        engine = SocketEngine(client: client, url: NSURL(string: "http://localhost")!, options: nil)
         
         client.setTestable()
     }
     
     func testBasicPollingMessage() {
-        let expect = expectation(description: "Basic polling test")
+        let expectation = expectationWithDescription("Basic polling test")
         client.on("blankTest") {data, ack in
-            expect.fulfill()
+            expectation.fulfill()
         }
         
         engine.parsePollingMessage("15:42[\"blankTest\"]")
-        waitForExpectations(timeout: 3, handler: nil)
+        waitForExpectationsWithTimeout(3, handler: nil)
     }
     
     func testTwoPacketsInOnePollTest() {
-        let finalExpectation = expectation(description: "Final packet in poll test")
+        let finalExpectation = expectationWithDescription("Final packet in poll test")
         var gotBlank = false
         
         client.on("blankTest") {data, ack in
@@ -40,7 +40,7 @@ class SocketEngineTest: XCTestCase {
         }
         
         client.on("stringTest") {data, ack in
-            if let str = data[0] as? String, gotBlank {
+            if let str = data[0] as? String where gotBlank {
                 if str == "hello" {
                     finalExpectation.fulfill()
                 }
@@ -48,43 +48,43 @@ class SocketEngineTest: XCTestCase {
         }
         
         engine.parsePollingMessage("15:42[\"blankTest\"]24:42[\"stringTest\",\"hello\"]")
-        waitForExpectations(timeout: 3, handler: nil)
+        waitForExpectationsWithTimeout(3, handler: nil)
     }
     
     func testEngineDoesErrorOnUnknownTransport() {
-        let finalExpectation = expectation(description: "Unknown Transport")
+        let finalExpectation = expectationWithDescription("Unknown Transport")
         
         client.on("error") {data, ack in
-            if let error = data[0] as? String, error == "Unknown transport" {
+            if let error = data[0] as? String where error == "Unknown transport" {
                 finalExpectation.fulfill()
             }
         }
         
         engine.parseEngineMessage("{\"code\": 0, \"message\": \"Unknown transport\"}", fromPolling: false)
-        waitForExpectations(timeout: 3, handler: nil)
+        waitForExpectationsWithTimeout(3, handler: nil)
     }
     
     func testEngineDoesErrorOnUnknownMessage() {
-        let finalExpectation = expectation(description: "Engine Errors")
+        let finalExpectation = expectationWithDescription("Engine Errors")
         
         client.on("error") {data, ack in
             finalExpectation.fulfill()
         }
         
         engine.parseEngineMessage("afafafda", fromPolling: false)
-        waitForExpectations(timeout: 3, handler: nil)
+        waitForExpectationsWithTimeout(3, handler: nil)
     }
     
     func testEngineDecodesUTF8Properly() {
-        let expect = expectation(description: "Engine Decodes utf8")
+        let expectation = expectationWithDescription("Engine Decodes utf8")
         
         client.on("stringTest") {data, ack in
             XCTAssertEqual(data[0] as? String, "lïne one\nlīne \rtwo", "Failed string test")
-            expect.fulfill()
+            expectation.fulfill()
         }
 
         engine.parsePollingMessage("41:42[\"stringTest\",\"lÃ¯ne one\\nlÄ«ne \\rtwo\"]")
-        waitForExpectations(timeout: 3, handler: nil)
+        waitForExpectationsWithTimeout(3, handler: nil)
     }
 
     func testEncodeURLProperly() {
@@ -101,24 +101,5 @@ class SocketEngineTest: XCTestCase {
 
         XCTAssertEqual(engine.urlPolling.query, "transport=polling&b64=1&forbidden=%21%2A%27%28%29%3B%3A%40%26%3D%2B%24%2C%2F%3F%25%23%5B%5D%22%20%7B%7D")
         XCTAssertEqual(engine.urlWebSocket.query, "transport=websocket&forbidden=%21%2A%27%28%29%3B%3A%40%26%3D%2B%24%2C%2F%3F%25%23%5B%5D%22%20%7B%7D")
-    }
-    
-    func testBase64Data() {
-        let expect = expectation(description: "Engine Decodes base64 data")
-        let b64String = "b4aGVsbG8NCg=="
-        let packetString = "451-[\"test\",{\"test\":{\"_placeholder\":true,\"num\":0}}]"
-        
-        client.on("test") {data, ack in
-            if let data = data[0] as? Data, let string = String(data: data, encoding: .utf8) {
-                XCTAssertEqual(string, "hello")
-            }
-            
-            expect.fulfill()
-        }
-        
-        engine.parseEngineMessage(packetString, fromPolling: false)
-        engine.parseEngineMessage(b64String, fromPolling: false)
-        
-        waitForExpectations(timeout: 3, handler: nil)
     }
 }
